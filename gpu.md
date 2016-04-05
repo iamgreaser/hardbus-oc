@@ -10,7 +10,7 @@ Status: Early draft, does need improvement
     10 I -S command_queue(&)
     14 I -S immediate_command(&)
     18 I RS command_dma_len - in 32-bit words - command DMA activates when you write the uppermost byte of this
-    1C I R- status flags
+    1C I R- status_flags
     
     20 I RW fg_col - top bit, if set, means indexed, otherwise it's RGB
     24 I RW bg_col - top bit, if set, means indexed, otherwise it's RGB

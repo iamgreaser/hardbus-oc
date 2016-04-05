@@ -137,3 +137,7 @@ If this is to be used by a big-endian architecture, it is up to the architecture
 
 Ideally the address **SHOULD** match the address fed to the component documentation. If this is the case, then the mask (and possibly the data) **MUST** be adjusted to suit.
 
+## Open bus
+
+`0xFFFFFFFF`. Please respect this convention. You can use `return -1;` for this.
+
