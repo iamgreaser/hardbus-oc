@@ -8,9 +8,9 @@ I'm pretty sure the ARM data bus works in a similar fashion. Probably the same f
 
 Components shall provide these three functions to architectures:
 
-    void mmioWriteMask32(int addr, int mask, int data);
-    int   mmioReadMask32(int addr, int mask);
-    int  mmioGetBusWidth();
+    void mmioWriteBus32(int addr, int mask, int data);
+    int  mmioReadBus32(int addr, int mask);
+    int  mmioGetAddressWidth();
 
 It is **REQUIRED** that every byte of `mask` provided by the architecture is either `0x00` or `0xFF`. Real hardware would use a byte enable.
 
