@@ -70,44 +70,44 @@ Ideally we want this to cover all the non-query stuff.
 
 However, one query is provided which involves reading a string.
 
-    0x41HHHWWW = set rect w/h
-    0x42YYYXXX = set rect x/y
-    0x43YYYXXX = set delta x/y (sign-extended)
+    0x41hhhwww = set rect w/h
+    0x42yyyxxx = set rect x/y
+    0x43yyyxxx = set delta x/y (sign-extended)
     
-    0x45HHHWWW = set screen w/h
-    0x46HHHWWW = set screen pan w/h
-    0x47YYYXXX = set screen pan x/y
+    0x45hhhwww = set screen w/h
+    0x46hhhwww = set screen pan w/h
+    0x47yyyxxx = set screen pan x/y
     
-    0x50RRGGBB = set FG direct
-    0x51RRGGBB = set BG direct
-    0x520000II = set FG indexed
-    0x530000II = set BG indexed
+    0x50rrggbb = set FG direct
+    0x51rrggbb = set BG direct
+    0x520000ii = set FG indexed
+    0x530000ii = set BG indexed
     
-    0x580000II
-    0x00RRGGBB = set palette colour
+    0x580000ii
+    0x00rrggbb = set palette colour
     
-    0x6000CCCC = fill with char
-    0x6100CCCC = set char, autoadvancing rx
-    0x6200CCCC = set char, autoadvancing ry
-    0x6300CCCC = set char, leaving rx, ry alone
+    0x6000cccc = fill with char
+    0x6100cccc = set char, autoadvancing rx
+    0x6200cccc = set char, autoadvancing ry
+    0x6300cccc = set char, leaving rx, ry alone
     
-    0x6800LLLL = set string horizontal 16-bit (DMA1)
-    0x6900LLLL = set string horizontal UTF-8 (DMA1)
-    0x6A00LLLL = set string vertical 16-bit (DMA1)
-    0x6B00LLLL = set string vertical UTF-8 (DMA1)
-    ^ L = length in transfer units, for UTF-8 these are 8 bits, for 16-bit these are 16 bits
+    0x6800ssss = set string horizontal 16-bit (DMA1)
+    0x6900ssss = set string horizontal UTF-8 (DMA1)
+    0x6A00ssss = set string vertical 16-bit (DMA1)
+    0x6B00ssss = set string vertical UTF-8 (DMA1)
+    ^ s = size in transfer units, for UTF-8 these are 8 bits, for 16-bit these are 16 bits
     
     0x6E010000 = copy block
     
     0x6EFE0000 = signal IRQ0
     
-    0x700100LL
+    0x700100ss
     0x--------
     ..........
-    0x-------- = bind screen address (L = length in bytes, padded upwards to fit)
+    0x-------- = bind screen address (s = size in bytes, padded upwards to fit)
     
-    0x720100LL = DMA bind screen address (DMA1, L = length of buffer in bytes, uses byte mode)
-    0x730100LL = get screen address (DMA2, L = length of buffer in bytes, padded with 0s, uses byte mode)
+    0x720100ss = DMA bind screen address (DMA1, s = size of buffer in bytes, uses byte mode)
+    0x730100ss = get screen address (DMA2, s = size of buffer in bytes, padded with 0s, uses byte mode)
 
 ## Immediate command ops
 
