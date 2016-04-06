@@ -89,19 +89,19 @@ With that said, an architecture **SHOULD** handle such a case without catching f
 Components shall provide these two functions to architectures:
 
     int interruptPinCount();
-    void interruptSetToken(int cmp_pin, int arc_pin);
+    void interruptSetPin(int cmp_pin, int arc_pin);
 
 Architectures shall provide this function to components:
 
     void interrupt(int arc_pin, boolean state);
 
-Interrupts from a component **MUST** only be fired from a valid `token`.
+Interrupts from a component **MUST** only be fired from a valid `arc_pin`.
 
-For `interruptSetToken`, `cmp_pin` refers to a pin on the component, not on the architecture. If `arc_pin` is -1, this interrupt is disabled. Otherwise, any non-negative value is valid.
+For `interruptSetPin`, `cmp_pin` refers to a pin on the component, not on the architecture. If `arc_pin` is -1, this interrupt is disabled. Otherwise, any non-negative value is valid.
 
 For `interrupt`, `state` indicates the state of the interrupt pin. Remember to send `interrupt(arc_pin, false);` when your interrupt is acknowledged.
 
-Sidenote: If you are implementing a Z80 or 8080, the data that gets chucked on the data bus should be determined in the architecture implementation, not the component implementation.
+Sidenote: If you are implementing a Z80 or 8080, the data that gets chucked on the data bus should be determined in the architecture implementation, not the component implementation. For vectored interrupts, you will ideally want to implement this as an `arc_pin` value, even though strictly speaking they all use the same physical interrupt pin.
 
 ## Component headers for Plug 'n' Play bus
 
