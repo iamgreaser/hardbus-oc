@@ -8,25 +8,18 @@ Status: Early draft
     08 I R- code_capacity
     0C I R- data_capacity
 
-## DMA map
-
-* 0 = main DMA
-
 ## Commands
 
-    0x01: Reset
-    0x20: Read code via MMIO
-    0x21: Read data via MMIO
-    0x22: Read label via MMIO
-    0x28: Read code via DMA
-    0x29: Read data via DMA
-    0x2A: Read label via DMA
-    0x30: Write code via MMIO
-    0x31: Write data via MMIO
-    0x32: Write label via MMIO
-    0x38: Write code via DMA
-    0x39: Write data via DMA
-    0x3A: Write label via DMA
+    0x01: End of command
+    0x20: Read code
+    0x21: Read data
+    0x22: Read label
+    0x30: Write code
+    0x31: Write data
+    0x32: Write label
+    0xFE: Reset
+
+You **MUST** send an "end of command" message after you have finished writing data.
 
 ## Status flags
 
@@ -51,6 +44,6 @@ Status: Early draft
 
 * `getChecksum`. To make this more realistic I'd prefer this to be done as a command.
 * `makeReadonly`.
-* Some basic method of locking/unlocking the chip for writing.
+* Some basic method of locking/unlocking the chip for writing (not to be confused with `makeReadonly`).
 * Some method of determining if the chip is read-only.
 
