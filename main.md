@@ -1,4 +1,4 @@
-This is based on how the MIPS data bus typically works, because it's reasonably simple and very flexible. Or at least how I think it works. This is also reminding me that I really need to refactor OCMIPS.
+This is based on how the MIPS data bus typically works, because it's reasonably simple and very flexible. Or at least how I think it works.
 
 If there's something that sucks about it, please leave it in the comments and I can change it.
 
@@ -20,7 +20,7 @@ It is **NOT REQUIRED** that the lower 2 bits of `addr` are `00`. However, they c
 
 The DMAChannel interface provides these methods:
 
-    void dmaAlert(DMAChannel cmp, int cmp_chn);
+    void dmaAlert(DMAChannel cmp_chn);
     boolean dmaWrite(int data, int size);
     void dmaRelease();
 
@@ -76,7 +76,7 @@ When the architecture wants to release an IRQ pin, it calls `interruptSetPin(cmp
 
 When an IRQ pin is released, the state of the pin **MUST** be set to `false`.
 
-For `interruptFire`, `state` indicates the state of the interrupt pin. Remember to send `interrupt(arc_pin, false);` when your interrupt is acknowledged.
+For `interruptFire`, `state` indicates the state of the interrupt pin. Remember to send `interruptFire(arc_pin, false);` when your interrupt is acknowledged.
 
 Sidenote: If you are implementing a Z80 or 8080, the data that gets chucked on the data bus should be determined in the architecture implementation, not the component implementation. For vectored interrupts, you will ideally want to implement this as an `arc_pin` value, even though strictly speaking they all use the same physical interrupt pin.
 
