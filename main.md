@@ -123,7 +123,7 @@ Components shall provide these methods to architectures:
     boolean hardbusIsFree();
     boolean hardbusTryClaim(HardbusHandle hdl);
     void hardbusForceClaim(HardbusHandle hdl);
-    boolean hardbusRelease(HardbusHandle hdl);
+    void hardbusRelease(HardbusHandle hdl);
 
 The HardbusHandle interface implements this method:
 
@@ -144,7 +144,7 @@ Both `hardbusRelease()` and `hardbusForceClaim()` release all DMA channels and I
 
 An architecture **MUST NOT** use `hardbusRelease()` unless it holds the bus. If kicking out a bus master is necessary, it should use `hardbusForceClaim()`.
 
-An architecture **MUST NOT** call its own HardbusHandle methods - these are **ONLY** to be used by the component. If the architecture wishes to release the Hardbus, it **MUST** call `hardbusRelease()` on the component.
+An architecture **MUST NOT** call its own HardbusHandle methods - these are **ONLY** to be used by the component. If the architecture wishes to release the Hardbus, it **MUST** call `hardbusRelease()` on the component. Invalid calls to `hardbusRelease()` **MUST** be ignored.
 
 While an architecture is not required to claim the bus before use, it is recommended. Trivial queries over the MMIO bus should be OK. DMA and IRQ usage or anything that affects state **SHOULD** claim the bus.
 
@@ -167,7 +167,7 @@ While an architecture is not required to claim the bus before use, it is recomme
     boolean hardbusIsFree();
     boolean hardbusTryClaim(HardbusHandle hdl);
     void hardbusForceClaim(HardbusHandle hdl);
-    boolean hardbusRelease(HardbusHandle hdl);
+    void hardbusRelease(HardbusHandle hdl);
 
 ### DMAChannel
 
