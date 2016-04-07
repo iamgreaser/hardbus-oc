@@ -20,7 +20,7 @@ It is **NOT REQUIRED** that the lower 2 bits of `addr` are `00`. However, they c
 
 The DMAChannel interface provides these methods:
 
-    void dmaAlert(DMAChannel cmp_chn);
+    void dmaAlert(DMAChannel recip_chn);
     boolean dmaWrite(int data, int size);
     void dmaRelease();
 
