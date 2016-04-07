@@ -18,26 +18,24 @@ It is **NOT REQUIRED** that the lower 2 bits of `addr` are `00`. However, they c
 
 ### DMA
 
-*Due to bus contention issues with other "bus masters" this is being reworked. See issue #3.*
-
 The DMAChannel interface provides these methods:
 
-    void dmaAlert(HardbusComponent cmp, int cmp_chn);
+    void dmaAlert(DMAChannel cmp, int cmp_chn);
     boolean dmaWrite(int data, int size);
-
-*XXX: should the HardbusComponent be provided, or just the address?*
+    void dmaRelease();
 
 Architecture code should implement the DMAChannel interface, preferably as a separate class.
 
 Components shall provide these methods to architectures:
 
     int dmaChannelCount();
-    void dmaLinkChannel(int cmp_chn, DMAChannel arc_chn);
-    void dmaUnlinkChannel(int cmp_chn, DMAChannel arc_chn);
-    void dmaAlert(int cmp_chn, DMAChannel arc_chn);
-    boolean dmaWrite(int cmp_chn, int data, int size);
+    DMAChannel dmaSetChannel(int cmp_chn, DMAChannel arc_chn);
 
 `dmaChannelCount` returns the number of channels this component has.
+
+For `dmaSetChannel`, if `arc_chn` is `null`, the channel is released. If this function returns `null`, the channel binding failed. Only one DMA channel binding can be active at any one time.
+
+When either end wants to release a DMA channel, they call `dmaRelease()` on the DMA channel object. Both ends then **MUST NOT** continue to use this channel, although further `dmaRelease()` calls are permitted. Only one end needs to call this function. This function is called by `dmaSetChannel()` automatically.
 
 Either end can call `dmaAlert` when they are ready to receive data.
 
@@ -48,9 +46,7 @@ It is good practice to keep writing to `dmaWrite` until it returns `false`.
 If DMA is not supported by a component, this will be an acceptable implementation:
 
     public int dmaChannelCount() { return 0; }
-    public void dmaSetChannel(int cmp_chn, int arc_chn) { }
-    public void dmaAlert(int cmp_chn, int arc_chn) { }
-    public boolean dmaWrite(int cmp_chn, int data, int size) { return false; }
+    public DMAChannel dmaSetChannel(int cmp_chn, DMAChannel arc_chn) { return null; }
 
 A component **MUST NOT** attempt DMA on a DMAChannel that has since been unlinked.
 
@@ -58,23 +54,27 @@ With that said, an architecture **SHOULD** handle such a case without catching f
 
 ## Interrupts
 
-*Due to bus contention issues with other "bus masters" this is being reworked. See issue #3.*
-
 Components shall provide these two methods to architectures:
 
     int interruptPinCount();
-    void interruptLinkPin(int cmp_pin, IRQChannel irq);
-    void interruptUnlinkPin(int cmp_pin, IRQChannel irq);
+    void interruptSetPin(int cmp_pin, IRQPin irq);
 
-Architecture code should implement the IRQChannel interface, preferably as a separate class.
+Architecture code should implement the IRQPin interface, preferably as a separate class.
 
-The IRQChannel interface provides these methods:
+The IRQPin interface provides these methods:
 
     void interruptFire(boolean state);
+    void interruptRelease();
 
 Interrupts from a component **MUST** only be fired from a valid `arc_pin`.
 
-For `interruptLinkPin` and `interruptUnlinkPin`, `cmp_pin` refers to a pin on the component, not on the architecture.
+For `interruptSetPin`, `cmp_pin` refers to a pin on the component, not on the architecture. Only one IRQ pin binding can be active at any one time.
+
+When the component wants to release an IRQ pin, it calls `interruptRelease()` on the IRQ pin object. Both ends then **MUST NOT** continue to use this channel, although further `interruptRelease()` calls are permitted. This function is called by `interruptSetPin()` automatically.
+
+When the architecture wants to release an IRQ pin, it calls `interruptSetPin(cmp_pin, *)` with either a different IRQ pin, or `null`.
+
+When an IRQ pin is released, the state of the pin **MUST** be set to `false`.
 
 For `interruptFire`, `state` indicates the state of the interrupt pin. Remember to send `interrupt(arc_pin, false);` when your interrupt is acknowledged.
 
@@ -119,6 +119,8 @@ Ideally the address **SHOULD** match the address fed to the component documentat
 ## Bus contention
 
 TODO. This will need to be resolved.
+
+DMA and IRQ currently support kickout mechanisms.
 
 ## Open bus
 
