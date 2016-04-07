@@ -16,7 +16,7 @@ It is **REQUIRED** that every byte of `mask` provided by the architecture is eit
 
 It is **NOT REQUIRED** that the lower 2 bits of `addr` are `00`. However, they can be ignored. The mask can also be ignored. Architecture authors **MUST** pass the appropriate address to `addr` and mask to `mask`, even if it's unaligned.
 
-### DMA
+## DMA
 
 The DMAChannel interface provides these methods:
 
@@ -118,11 +118,70 @@ Ideally the address **SHOULD** match the address fed to the component documentat
 
 ## Bus contention
 
-TODO. This will need to be resolved.
+Components shall provide these methods to architectures:
 
-DMA and IRQ currently support kickout mechanisms.
+    boolean hardbusIsFree();
+    boolean hardbusTryClaim(HardbusHandle hdl);
+    void hardbusForceClaim(HardbusHandle hdl);
+    boolean hardbusRelease(HardbusHandle hdl);
+
+The HardbusHandle interface implements this method:
+
+    boolean hardbusTryRelease();
+    void hardbusForceRelease();
+
+Architecture code should implement the HardbusHandle interface, preferably as a separate class.
+
+For architectures, it is recommended that `hardbusTryClaim()` is used over `hardbusForceClaim()`.
+
+An architecture **MUST NOT** claim the bus automatically for anything it isn't using.
+
+An architecture **MUST** release all of its handles on shutdown. This facility may need to be provided by OpenComputers itself.
+
+`hardbusTryClaim()` **MUST** return `false` if the bus is already in use and a call to `hardbusTryRelease()` on the current HardbusHandle returns `false`.
+
+Both `hardbusRelease()` and `hardbusForceClaim()` release all DMA channels and IRQ pins, and call the `hardbusRelease()` method of the HardbusHandle.
+
+An architecture **MUST NOT** use `hardbusRelease()` unless it holds the bus. If kicking out a bus master is necessary, it should use `hardbusForceClaim()`.
+
+An architecture **MUST NOT** call its own HardbusHandle methods - these are **ONLY** to be used by the component. If the architecture wishes to release the Hardbus, it **MUST** call `hardbusRelease()` on the component.
+
+While an architecture is not required to claim the bus before use, it is recommended. Trivial queries over the MMIO bus should be OK. DMA and IRQ usage or anything that affects state **SHOULD** claim the bus.
 
 ## Open bus
 
 `0xFFFFFFFF`. Please respect this convention. You can use `return -1;` for this.
+
+## Summary of interface methods
+
+### HardbusComponent
+
+    void mmioWriteBus32(int addr, int mask, int data);
+    int mmioReadBus32(int addr, int mask);
+    int mmioGetAddressWidth();
+    int dmaChannelCount();
+    DMAChannel dmaSetChannel(int cmp_chn, DMAChannel arc_chn);
+    int interruptPinCount();
+    void interruptSetPin(int cmp_pin, IRQPin irq);
+    int hwapiRevision();
+    boolean hardbusIsFree();
+    boolean hardbusTryClaim(HardbusHandle hdl);
+    void hardbusForceClaim(HardbusHandle hdl);
+    boolean hardbusRelease(HardbusHandle hdl);
+
+### DMAChannel
+
+    void dmaAlert(DMAChannel recip_chn);
+    boolean dmaWrite(int data, int size);
+    void dmaRelease();
+
+### IRQPin
+
+    void interruptFire(boolean state);
+    void interruptRelease();
+
+### HardbusHandle
+
+    boolean hardbusTryRelease();
+    void hardbusForceRelease();
 
