@@ -6,7 +6,7 @@ I'm pretty sure the ARM data bus works in a similar fashion. Probably the same f
 
 ## MMIO bus
 
-Components shall provide these three functions to architectures:
+Components shall provide these three methods to architectures:
 
     void mmioWriteBus32(int addr, int mask, int data);
     int  mmioReadBus32(int addr, int mask);
@@ -16,51 +16,28 @@ It is **REQUIRED** that every byte of `mask` provided by the architecture is eit
 
 It is **NOT REQUIRED** that the lower 2 bits of `addr` are `00`. However, they can be ignored. The mask can also be ignored. Architecture authors **MUST** pass the appropriate address to `addr` and mask to `mask`, even if it's unaligned.
 
-### This may get chucked out like that section that was marked as "this may get chucked out"
-
-Architectures should have access to a utilities API to convert addresses to masks:
-
-    int getMask8(int addr);
-    int getMask16(int addr);
-    int getMask32(int addr);
-    int getHiMask8(int addr);
-    int getHiMask16(int addr);
-    int getHiMask32(int addr);
-    int getData8(int addr, int data);
-    int getData16(int addr, int data);
-    int getData32(int addr, int data);
-
-These are completely optional and to be blunt very easy to implement yourself:
-
-    return 0xFF<<((addr&3)*8);
-    return 0xFFFF<<((addr&3)*8);
-    return 0xFFFFFFFF<<((addr&3)*8);
-    return 0x000000FF>>>((4-(addr&3))*8);
-    return 0x0000FFFF>>>((4-(addr&3))*8);
-    return 0xFFFFFFFF>>>((4-(addr&3))*8);
-    return data<<((addr&3)*8);
-    return data<<((addr&3)*8);
-    return data<<((addr&3)*8);
-
-And of course `getHiMask8` is completely useless, but provided for completeness.
-
 ### DMA
 
-Components shall provide these functions to architectures:
+*Due to bus contention issues with other "bus masters" this is being reworked. See issue #3.*
+
+The DMAChannel interface provides these methods:
+
+    void dmaAlert(HardbusComponent cmp, int cmp_chn);
+    boolean dmaWrite(int data, int size);
+
+*XXX: should the HardbusComponent be provided, or just the address?*
+
+Architecture code should implement the DMAChannel interface, preferably as a separate class.
+
+Components shall provide these methods to architectures:
 
     int dmaChannelCount();
-    void dmaSetChannel(int cmp_chn, int arc_chn);
-    void dmaAlert(int cmp_chn/dst_chn, int arc_chn/src_chn);
-    boolean dmaWrite(int cmp_chn/dst_chn, int data, int size);
+    void dmaLinkChannel(int cmp_chn, DMAChannel arc_chn);
+    void dmaUnlinkChannel(int cmp_chn, DMAChannel arc_chn);
+    void dmaAlert(int cmp_chn, DMAChannel arc_chn);
+    boolean dmaWrite(int cmp_chn, int data, int size);
 
-Architectures shall provide these functions to components:
-
-    void dmaAlert(int arc_chn/dst_chn, int cmp_chn/src_chn);
-    boolean dmaWrite(int arc_chn/dst_chn, int data, int size);
-
-`dmaChannelCount` returns the number of channels this component has. This function may be unnecessary.
-
-For `dmaSetChannel`, an `arc_chn` of `-1` disables DMA for that channel.
+`dmaChannelCount` returns the number of channels this component has.
 
 Either end can call `dmaAlert` when they are ready to receive data.
 
@@ -75,31 +52,31 @@ If DMA is not supported by a component, this will be an acceptable implementatio
     public void dmaAlert(int cmp_chn, int arc_chn) { }
     public boolean dmaWrite(int cmp_chn, int data, int size) { return false; }
 
-If DMA is not supported by an architecture, this will be an acceptable implementation:
-
-    public void dmaAlert(int arc_chn, int cmp_chn) { }
-    public boolean dmaWrite(int arc_chn, int data, int size) { return false; }
-
-A component **MUST NOT** attempt DMA on an architecture channel that was not granted to it.
+A component **MUST NOT** attempt DMA on a DMAChannel that has since been unlinked.
 
 With that said, an architecture **SHOULD** handle such a case without catching fire. Ignoring it is the best outcome. Unless your aim is to make an easily exploitable system.
 
 ## Interrupts
 
-Components shall provide these two functions to architectures:
+*Due to bus contention issues with other "bus masters" this is being reworked. See issue #3.*
+
+Components shall provide these two methods to architectures:
 
     int interruptPinCount();
-    void interruptSetPin(int cmp_pin, int arc_pin);
+    void interruptLinkPin(int cmp_pin, IRQChannel irq);
+    void interruptUnlinkPin(int cmp_pin, IRQChannel irq);
 
-Architectures shall provide this function to components:
+Architecture code should implement the IRQChannel interface, preferably as a separate class.
 
-    void interrupt(int arc_pin, boolean state);
+The IRQChannel interface provides these methods:
+
+    void interruptFire(boolean state);
 
 Interrupts from a component **MUST** only be fired from a valid `arc_pin`.
 
-For `interruptSetPin`, `cmp_pin` refers to a pin on the component, not on the architecture. If `arc_pin` is -1, this interrupt is disabled. Otherwise, any non-negative value is valid.
+For `interruptLinkPin` and `interruptUnlinkPin`, `cmp_pin` refers to a pin on the component, not on the architecture.
 
-For `interrupt`, `state` indicates the state of the interrupt pin. Remember to send `interrupt(arc_pin, false);` when your interrupt is acknowledged.
+For `interruptFire`, `state` indicates the state of the interrupt pin. Remember to send `interrupt(arc_pin, false);` when your interrupt is acknowledged.
 
 Sidenote: If you are implementing a Z80 or 8080, the data that gets chucked on the data bus should be determined in the architecture implementation, not the component implementation. For vectored interrupts, you will ideally want to implement this as an `arc_pin` value, even though strictly speaking they all use the same physical interrupt pin.
 
@@ -127,7 +104,7 @@ OpenComputers should handle the header, all a component needs to do is provide t
 
 A component **MUST NOT** provide an address or type with NUL bytes (`"\x00"` / 0x00) within it.
 
-HW API revision is provided by this function of the component:
+HW API revision is provided by this method of the component:
 
     int hwapiRevision();
 
@@ -138,6 +115,10 @@ The bus will be in little-endian.
 If this is to be used by a big-endian architecture, it is up to the architecture to decide how this will even work. However, it will most likely require translating the mask field, and possibly the data field as well if the data value is not repeated over the bus.
 
 Ideally the address **SHOULD** match the address fed to the component documentation. If this is the case, then the mask (and possibly the data) **MUST** be adjusted to suit.
+
+## Bus contention
+
+TODO. This will need to be resolved.
 
 ## Open bus
 
