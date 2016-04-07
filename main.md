@@ -24,7 +24,7 @@ The DMAChannel interface provides these methods:
     boolean dmaWrite(int data, int size);
     void dmaRelease();
 
-Architecture code should implement the DMAChannel interface, preferably as a separate class.
+Architecture and component code should implement the DMAChannel interface, preferably as separate classes.
 
 Components shall provide these methods to architectures:
 
